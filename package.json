@@ -1,0 +1,10 @@
+{
+    "name": "com.ultrashel.asynctimer",
+    "displayName": "Async Timer",
+    "version": "1.0.0",
+    "unity": "2020.3",
+    "description": "async timer based on UniTasks",
+    "dependencies": {
+        "com.cysharp.unitask": "2.3.1"
+    }
+}
