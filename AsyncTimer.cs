@@ -3,46 +3,46 @@ using System.Threading;
 using Cysharp.Threading.Tasks;
 
 namespace AsyncUtils {
-	public class AsyncTimer {
-		float _leftTime;
+    public class AsyncTimer {
+        float _leftTime;
 
-		CancellationTokenSource _tokenSource;
+        CancellationTokenSource _tokenSource;
 		
-		public float LeftTime => _leftTime;
+        public float LeftTime => _leftTime;
 
-		public event Action<AsyncTimer> OnTimerTick;
-		public event Action<AsyncTimer> OnTimerEnd;
+        public event Action OnTimerTick;
+        public event Action OnTimerEnd;
 		
-		public void Start(float timeSec) {
-			if ( _tokenSource != null ) {
-				Stop();
-			}
-			_leftTime          = timeSec;
-			_tokenSource       = new CancellationTokenSource();
-			UniTask.Void(Tick);
-		}
+		
+        public void Start(float timeSec) {
+            if ( _tokenSource != null ) {
+                throw new InvalidOperationException("Timer is already started");
+            }
+            _leftTime          = timeSec;
+            _tokenSource       = new CancellationTokenSource();
+			
+            Tick(_tokenSource.Token).Forget();
+        }
 
-		public void Stop() {
-			_tokenSource?.Cancel();
-		}
+        public void Stop() {
+            _tokenSource?.Cancel();
+            _tokenSource?.Dispose();
+            _tokenSource = null;
+        }
 
-		async UniTaskVoid Tick() {
-			OnTimerTick?.Invoke(this);
-			while ( _leftTime > 0 ) {
-				try {
-					await UniTask.Delay(1000, cancellationToken: _tokenSource.Token);
-				} catch ( OperationCanceledException ) {
-					// Ignore exception
-				}
-				if ( _tokenSource.IsCancellationRequested ) {
-					_tokenSource = null;
-					return;
-				}
-				_leftTime -= 1f;
-				OnTimerTick?.Invoke(this);
-			}
-			Stop();
-			OnTimerEnd?.Invoke(this);
-		}
-	}
+        async UniTaskVoid Tick(CancellationToken token) {
+            OnTimerTick?.Invoke();
+            while ( _leftTime > 0 ) {
+                try {
+                    await UniTask.Delay(1000, cancellationToken: token);
+                } catch ( OperationCanceledException ) {
+                    return;
+                }
+                _leftTime -= 1f;
+                OnTimerTick?.Invoke();
+            }
+            Stop();
+            OnTimerEnd?.Invoke();
+        }
+    }
 }
