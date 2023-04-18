@@ -21,6 +21,7 @@ namespace AsyncUtils {
             }
             _leftTime          = timeSec;
             _tokenSource       = new CancellationTokenSource();
+            _tickTimeSec       = tickTime;
 			
             Tick(_tokenSource.Token).Forget();
         }
