@@ -5,6 +5,7 @@ using Cysharp.Threading.Tasks;
 namespace AsyncUtils {
     public class AsyncTimer {
         float _leftTime;
+        float _tickTimeSec;
 
         CancellationTokenSource _tokenSource;
 		
@@ -14,7 +15,7 @@ namespace AsyncUtils {
         public event Action OnTimerEnd;
 		
 		
-        public void Start(float timeSec) {
+        public void Start(float timeSec, float tickTime = 1f) {
             if ( _tokenSource != null ) {
                 throw new InvalidOperationException("Timer is already started");
             }
@@ -34,11 +35,12 @@ namespace AsyncUtils {
             OnTimerTick?.Invoke();
             while ( _leftTime > 0 ) {
                 try {
-                    await UniTask.Delay(1000, cancellationToken: token);
+                    var msTickTime = (int)(_tickTimeSec * 1000);
+                    await UniTask.Delay(msTickTime, cancellationToken: token);
                 } catch ( OperationCanceledException ) {
                     return;
                 }
-                _leftTime -= 1f;
+                _leftTime -= _tickTimeSec;
                 OnTimerTick?.Invoke();
             }
             Stop();
